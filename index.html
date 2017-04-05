@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plural Forms by Country</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 40px;
+        }
+    </style>
+</head>
+<body>
+<h1>Plural Forms by Country</h1>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="//unpkg.com/topojson-client@3"></script>
+<script>
+
+    var width = 960,
+        height = 480;
+
+    var projection = d3.geoEquirectangular()
+        .clipExtent([[0, 0], [width, height - 75]])
+        .scale(height / Math.PI)
+        .rotate([-10])
+        .translate([width / 2, height / 2]);
+
+    var path = d3.geoPath()
+        .projection(projection);
+
+    var graticule = d3.geoGraticule();
+
+    var svg = d3.select('body').append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    var defs = svg.append('defs');
+
+    svg.append('path')
+        .datum(graticule)
+        .attr('class', 'graticule')
+        .attr('d', path);
+
+    d3.queue()
+        .defer(d3.json, './data/world.json')
+        .defer(d3.json, './data/country-language.json')
+        .await(ready);
+
+    function ready(error, world, countryLanguage) {
+        if (error) {
+            throw error;
+        }
+
+        svg.selectAll('.land')
+            .data(topojson.feature(world, world.objects.countries).features)
+            .enter()
+            .append('path')
+            .attr('class', 'land')
+            .attr('fill', d => fill(d, countryLanguage))
+            .attr('d', path);
+
+        svg.append('path')
+            .datum(topojson.mesh(world, world.objects.countries))
+            .attr('class', 'boundary')
+            .attr('fill', 'none')
+            .attr('stroke', '#000')
+            .attr('stroke-width', 0.5)
+            .attr('d', path);
+
+        var ls = 20;
+        var lp = [20, 270];
+
+        svg.selectAll('.legend')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('rect')
+            .attr('x', lp[0])
+            .attr('y', (d, i) => i * ls + lp[1])
+            .attr('width', ls)
+            .attr('height', ls)
+            .attr('fill', color)
+
+        svg.selectAll('.text')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('text')
+            .attr('x', lp[0] + ls / 2)
+            .attr('y', (d, i) => i * ls + lp[1] + ls / 2)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .attr('font-weight', 'bold')
+            .text(d => d);
+    }
+
+    var color = d3.scaleLinear()
+        .domain([1, 2, 3, 4, 5, 6])
+        .range(['#00bfff', '#2da2a3', '#37b35b', '#8fdf29', '#e5ea11', '#ffd700']);
+
+    function fill(d, countryLanguage) {
+        return ((d.id > 0) && (countryLanguage.country[d.id].forms.length))
+            ? countryLanguage.country[d.id].forms.length === 1
+                ? color(countryLanguage.country[d.id].forms[0])
+                : pattern(countryLanguage.country[d.id].forms)
+            : 'transparent'
+    }
+
+    function pattern(forms) {
+        var n = 'pattern-' + forms.join('-');
+        var s = 3;
+
+        if (defs.selectAll('#' + n).nodes().length) {
+            return 'url(#' + n + ')';
+        } else {
+            var p = defs.append('pattern')
+                .attr('id', n)
+                .attr('width', forms.length * s)
+                .attr('height', s)
+                .attr('patternUnits', 'userSpaceOnUse');
+
+            p.selectAll('rect').data(forms)
+                .enter()
+                .append('rect')
+                .attr('fill', color)
+                .attr('x', (d, i) => i * s)
+                .attr('y', 0)
+                .attr('width', s)
+                .attr('height', s);
+
+            return 'url(#' + n + ')';
+        }
+    }
+</script>
+</body>
+</html>
