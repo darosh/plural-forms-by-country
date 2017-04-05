@@ -15,31 +15,25 @@
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//unpkg.com/topojson-client@3.0.0"></script>
 <script>
+    var width = 960;
+    var height = 480;
 
-    var width = 960,
-        height = 480;
+    var clip = [[0, 960], [15, 390]];
 
     var projection = d3.geoEquirectangular()
-        .clipExtent([[0, 0], [width, height - 75]])
+        .clipExtent([[0, 0], [width, clip[1][1]]])
         .scale(height / Math.PI)
         .rotate([-10])
-        .translate([width / 2, height / 2]);
+        .translate([width / 2, height / 2 - clip[1][0]]);
 
     var path = d3.geoPath()
         .projection(projection);
 
-    var graticule = d3.geoGraticule();
-
     var svg = d3.select('body').append('svg')
         .attr('width', width)
-        .attr('height', height);
+        .attr('height', clip[1][1] - clip[1][0]);
 
     var defs = svg.append('defs');
-
-    svg.append('path')
-        .datum(graticule)
-        .attr('class', 'graticule')
-        .attr('d', path);
 
     d3.queue()
         .defer(d3.json, './data/world.json')
@@ -68,7 +62,7 @@
             .attr('d', path);
 
         var ls = 20;
-        var lp = [20, 270];
+        var lp = [0, clip[1][1] - clip[1][0] - 6 * ls];
 
         svg.selectAll('.legend')
             .data(d3.range(1, 7))
