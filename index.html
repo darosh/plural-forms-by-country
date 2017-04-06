@@ -21,6 +21,7 @@
         .clear {
             clear: both;
         }
+
         hr {
             border: 0;
             background: #e0e0e0;
@@ -37,7 +38,10 @@
 <svg class="forms" width="960" height="375"></svg>
 <hr>
 <h2>Rules</h2>
-<svg class="rules"></svg>
+<svg class="rules" width="960" height="375"></svg>
+<hr>
+<h2>Languages</h2>
+<svg class="languages" width="960" height="375"></svg>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//unpkg.com/topojson-client@3.0.0"></script>
 <script>
@@ -193,6 +197,72 @@
             .attr('font-family', 'sans-serif')
             .attr('font-size', 14)
             .text(d => d.country.length);
+
+        var langs = {};
+
+        Object.keys(countryLanguage.country).forEach(l => {
+            var n = countryLanguage.country[l].languages.length;
+
+            if (n > 0) {
+                langs[n] = langs[n] || 0;
+                langs[n]++;
+            }
+        });
+
+        svg = d3.select('svg.languages')
+            .attr('width', width)
+            .attr('height', clip[1][1] - clip[1][0] + add);
+
+        svg.selectAll('.land')
+            .data(topojson.feature(world, world.objects.countries).features)
+            .enter()
+            .append('path')
+            .attr('class', 'land')
+            .attr('fill', d => fillLanguages(d, countryLanguage, langs))
+            .attr('d', path);
+
+        svg.append('path')
+            .datum(topojson.mesh(world, world.objects.countries))
+            .attr('class', 'boundary')
+            .attr('fill', 'none')
+            .attr('stroke', '#000')
+            .attr('stroke-width', 0.5)
+            .attr('d', path);
+
+        svg.selectAll('.legend')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('rect')
+            .attr('x', lp[0])
+            .attr('y', (d, i) => i * ls + lp[1])
+            .attr('width', ls)
+            .attr('height', ls)
+            .attr('fill', color);
+
+        svg.selectAll('.legend-label')
+            .data(Object.keys(langs))
+            .enter()
+            .append('text')
+            .attr('x', lp[0] + ls / 2)
+            .attr('y', (d, i) => i * ls + lp[1] + ls / 2)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .attr('font-weight', 'bold')
+            .text(d => d);
+
+        svg.selectAll('.legend-stat')
+            .data(Object.keys(langs))
+            .enter()
+            .append('text')
+            .attr('x', lp[0] + +ls + ls + ls / 2)
+            .attr('y', (d, i) => i * ls + lp[1] + ls / 2)
+            .attr('text-anchor', 'end')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .text(d => langs[d]);
     }
 
     var color = d3.scaleLinear()
@@ -210,6 +280,13 @@
             ? countryLanguage.country[d.id].forms.length === 1
                 ? color(countryLanguage.country[d.id].forms[0])
                 : pattern(countryLanguage.country[d.id].forms)
+            : 'transparent'
+    }
+
+    function fillLanguages(d, countryLanguage, langs) {
+        console.log(countryLanguage, langs)
+        return ((d.id > 0) && (countryLanguage.country[d.id].forms.length))
+            ? color(Object.keys(langs).indexOf(countryLanguage.country[d.id].languages.length.toString()) + 1)
             : 'transparent'
     }
 
