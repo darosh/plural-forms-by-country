@@ -1,10 +1,12 @@
 const atlas = require('world-atlas/world/110m.json');
 const country = require('world-countries');
 const plurals = require('plurals-cldr');
+const cardinal = require('make-plural/data/plurals.json')['supplemental']['plurals-type-cardinal'];
 const iso6393 = require('iso-639-3');
 
 let ls = {};
 let cs = {};
+var ruleCache = [];
 
 atlas.objects.countries.geometries.forEach(geom => {
     let d = country.filter(c => c.ccn3 === geom.id);
@@ -26,6 +28,12 @@ atlas.objects.countries.geometries.forEach(geom => {
                         ls[a] = {
                             name: f.name.replace(/ \([^)]+\)/, ''),
                             plural: p
+                        };
+
+                        if (!cardinal[f.iso6391]) {
+                            console.error('missing cardinal: ', a);
+                        } else {
+                            ls[a].rule = ruleId(cardinal[f.iso6391]);
                         }
                     }
                 }
@@ -52,25 +60,41 @@ atlas.objects.countries.geometries.forEach(geom => {
     }
 });
 
+function ruleId(o) {
+    var s = JSON.stringify(o);
+    var i = ruleCache.indexOf(s);
+
+    if (i > -1) {
+        return i;
+    } else {
+        ruleCache.push(s);
+        return ruleCache.length - 1;
+    }
+}
+
 /*
  console.log(plurals.forms('af') === plurals.forms('asa'));
  true
 
  console.log(plurals.forms('af') === plurals.forms('ak'));
  false
+
+ ...but it does not work on same-rule-level :-(
  */
 
 let rs = {};
 
 Object.keys(cs).forEach(c => {
     cs[c].languages.forEach(l => {
-        let n = ls[l].plural.length.toString();
+        let nn = ls[l].plural.length;
+        let n = nn.toString();
         rs[n] = rs[n] || [];
-        let f = rs[n].filter(f => f.group === ls[l].plural)[0];
+        let f = rs[n].filter(f => f.group === ls[l].rule)[0];
 
         if (!f) {
             f = {
-                group: ls[l].plural,
+                group: ls[l].rule,
+                length: nn,
                 country: []
             };
 

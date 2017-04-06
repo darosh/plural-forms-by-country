@@ -4,6 +4,7 @@
   "author": "Jan Forst",
   "dependencies": {
     "iso-639-3": "1.0.0",
+    "make-plural": "4.0.1",
     "plurals-cldr": "1.0.3",
     "world-atlas": "1.1.4",
     "world-countries": "1.8.1"

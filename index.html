@@ -33,17 +33,17 @@
 <h1 class="left">Plural Forms by Country</h1>
 <a class="right" href="https://github.com/darosh/plural-forms-by-country">GitHub</a>
 <div class="clear"></div>
-<!--<h2>Forms</h2>-->
+<h2>Forms</h2>
 <svg class="forms"></svg>
-<!--<hr>-->
-<!--<h2>Rules</h2>-->
-<!--<svg class="rules"></svg>-->
+<hr>
+<h2>Rules</h2>
+<svg class="rules"></svg>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//unpkg.com/topojson-client@3.0.0"></script>
 <script>
     var width = 960;
     var height = 480;
-    var add = 120;
+    var add = 0;
 
     var clip = [[0, 960], [15, 390]];
 
@@ -173,7 +173,7 @@
             .enter()
             .append('rect')
             .attr('x', (d, i) => lp[0] + i * ls + ls)
-            .attr('y', (d, i) => (d.group.length - 1) * ls + lp[1] + add)
+            .attr('y', (d, i) => (d.length - 1) * ls + lp[1] + add)
             .attr('width', ls)
             .attr('height', ls)
             .attr('fill', d => colorRules(d, countryLanguage));
@@ -187,7 +187,7 @@
             .enter()
             .append('text')
             .attr('x', (d, i) => lp[0] + i * ls + ls + ls / 2)
-            .attr('y', (d, i) => (d.group.length - 1) * ls + lp[1] + ls / 2 + add)
+            .attr('y', (d, i) => (d.length - 1) * ls + lp[1] + ls / 2 + add)
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .attr('font-family', 'sans-serif')
@@ -200,9 +200,9 @@
         .range(['#00bfff', '#2da2a3', '#37b35b', '#8fdf29', '#e5ea11', '#ffd700']);
 
     function colorRules(d, countryLanguage) {
-        var a = countryLanguage.rules[d.group.length];
+        var a = countryLanguage.rules[d.length];
         var i = a.indexOf(d);
-        return d3.color(color(d.group.length)).brighter(1 * i / a.length);
+        return d3.color(color(d.length)).brighter(1 * i / a.length);
     }
 
     function fill(d, countryLanguage) {
