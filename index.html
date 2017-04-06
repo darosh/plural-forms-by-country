@@ -28,6 +28,29 @@
             height: 1px;
             margin: 40px 0;
         }
+
+        tr > * {
+            text-align: left;
+            padding: 0 8px;
+            line-height: 24px;
+        }
+
+        tr:not(:last-child) > *,
+        thead > tr > * {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .mono {
+            font-family: monospace;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        [v-cloak] {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -42,8 +65,58 @@
 <hr>
 <h2>Languages</h2>
 <svg class="languages" width="960" height="375"></svg>
+<hr>
+<div id="app">
+    <h2>Countries</h2>
+    <table v-cloak>
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Country</th>
+            <th>Languages</th>
+            <th>Forms</th>
+            <th>Languages (Forms)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(country, index) in country" v-if="country.languages.length">
+            <td class="mono text-right">{{index + 1}}</td>
+            <th>{{country.name}}</th>
+            <td class="mono">{{country.languages.length}}</td>
+            <td class="mono">{{country.forms}}</td>
+            <td>
+                <div v-for="language in country.languages">
+                    {{data.language[language].name}} <span
+                        class="mono">({{data.language[language].plural.length}})</span>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <hr>
+    <h2>Languages</h2>
+    <table v-cloak>
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Languages</th>
+            <th>Forms</th>
+            <th>Rule</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(language, index) in language">
+            <td class="mono text-right">{{index + 1}}</td>
+            <th>{{language.name}}</th>
+            <td class="mono">{{language.plural}}</td>
+            <td class="mono">{{language.plural.length}}-{{language.rule}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//unpkg.com/topojson-client@3.0.0"></script>
+<script src="//unpkg.com/vue@2.2.6/dist/vue.min.js"></script>
 <script>
     var width = 960;
     var height = 480;
@@ -263,6 +336,15 @@
             .attr('font-family', 'sans-serif')
             .attr('font-size', 14)
             .text(d => langs[d]);
+
+        new Vue({
+            el: '#app',
+            data: {
+                data: countryLanguage,
+                country: Object.keys(countryLanguage.country).map(k => countryLanguage.country[k]).sort((a, b) => a.name.localeCompare(b.name)),
+                language: Object.keys(countryLanguage.language).map(k => countryLanguage.language[k]).sort((a, b) => a.name.localeCompare(b.name))
+            }
+        })
     }
 
     var color = d3.scaleLinear()
@@ -284,7 +366,6 @@
     }
 
     function fillLanguages(d, countryLanguage, langs) {
-        console.log(countryLanguage, langs)
         return ((d.id > 0) && (countryLanguage.country[d.id].forms.length))
             ? color(Object.keys(langs).indexOf(countryLanguage.country[d.id].languages.length.toString()) + 1)
             : 'transparent'
