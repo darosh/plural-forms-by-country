@@ -8,15 +8,24 @@
             font-family: sans-serif;
             margin: 40px;
         }
+
         .left {
             float: left;
             margin-top: 0;
         }
+
         .right {
             float: right;
         }
+
         .clear {
             clear: both;
+        }
+        hr {
+            border: 0;
+            background: #e0e0e0;
+            height: 1px;
+            margin: 40px 0;
         }
     </style>
 </head>
@@ -24,11 +33,17 @@
 <h1 class="left">Plural Forms by Country</h1>
 <a class="right" href="https://github.com/darosh/plural-forms-by-country">GitHub</a>
 <div class="clear"></div>
+<!--<h2>Forms</h2>-->
+<svg class="forms"></svg>
+<!--<hr>-->
+<!--<h2>Rules</h2>-->
+<!--<svg class="rules"></svg>-->
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//unpkg.com/topojson-client@3.0.0"></script>
 <script>
     var width = 960;
     var height = 480;
+    var add = 120;
 
     var clip = [[0, 960], [15, 390]];
 
@@ -41,11 +56,8 @@
     var path = d3.geoPath()
         .projection(projection);
 
-    var svg = d3.select('body').append('svg')
-        .attr('width', width)
-        .attr('height', clip[1][1] - clip[1][0]);
-
-    var defs = svg.append('defs');
+    var svg;
+    var defs;
 
     d3.queue()
         .defer(d3.json, './data/world.json')
@@ -56,6 +68,12 @@
         if (error) {
             throw error;
         }
+
+        svg = d3.select('svg.forms')
+            .attr('width', width)
+            .attr('height', clip[1][1] - clip[1][0]);
+
+        defs = svg.append('defs');
 
         svg.selectAll('.land')
             .data(topojson.feature(world, world.objects.countries).features)
@@ -110,11 +128,82 @@
             .attr('font-family', 'sans-serif')
             .attr('font-size', 14)
             .text(d => Object.keys(countryLanguage.country).filter(f => countryLanguage.country[f].forms.indexOf(d) >= 0).length);
+
+        svg = d3.select('svg.rules')
+            .attr('width', width)
+            .attr('height', clip[1][1] - clip[1][0] + add);
+
+        defs = svg.append('defs');
+
+        svg.selectAll('.land')
+            .data(topojson.feature(world, world.objects.countries).features)
+            .enter()
+            .append('path')
+            .attr('class', 'land')
+            .attr('fill', d => fillRules(d, countryLanguage))
+            .attr('d', path);
+
+        svg.append('path')
+            .datum(topojson.mesh(world, world.objects.countries))
+            .attr('class', 'boundary')
+            .attr('fill', 'none')
+            .attr('stroke', '#000')
+            .attr('stroke-width', 0.5)
+            .attr('d', path);
+
+        svg.selectAll('.legend-label')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('text')
+            .attr('x', lp[0] + ls / 2)
+            .attr('y', (d, i) => i * ls + lp[1] + ls / 2 + add)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .attr('font-weight', 'bold')
+            .text(d => d);
+
+        svg.selectAll('.legend')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('g')
+            .selectAll('.legend')
+            .data(d => countryLanguage.rules[d])
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => lp[0] + i * ls + ls)
+            .attr('y', (d, i) => (d.group.length - 1) * ls + lp[1] + add)
+            .attr('width', ls)
+            .attr('height', ls)
+            .attr('fill', d => colorRules(d, countryLanguage));
+
+        svg.selectAll('.legend-stat')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('g')
+            .selectAll('.legend-stat')
+            .data(d => countryLanguage.rules[d])
+            .enter()
+            .append('text')
+            .attr('x', (d, i) => lp[0] + i * ls + ls + ls / 2)
+            .attr('y', (d, i) => (d.group.length - 1) * ls + lp[1] + ls / 2 + add)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .text(d => d.country.length);
     }
 
     var color = d3.scaleLinear()
         .domain([1, 2, 3, 4, 5, 6])
         .range(['#00bfff', '#2da2a3', '#37b35b', '#8fdf29', '#e5ea11', '#ffd700']);
+
+    function colorRules(d, countryLanguage) {
+        var a = countryLanguage.rules[d.group.length];
+        var i = a.indexOf(d);
+        return d3.color(color(d.group.length)).brighter(1 * i / a.length);
+    }
 
     function fill(d, countryLanguage) {
         return ((d.id > 0) && (countryLanguage.country[d.id].forms.length))
@@ -122,6 +211,23 @@
                 ? color(countryLanguage.country[d.id].forms[0])
                 : pattern(countryLanguage.country[d.id].forms)
             : 'transparent'
+    }
+
+    function fillRules(d, countryLanguage) {
+        if ((d.id > 0) && (countryLanguage.country[d.id].forms.length)) {
+            var colors = [];
+
+            countryLanguage.country[d.id].forms.forEach(r => {
+                var f = countryLanguage.rules[r].filter(s => s.country.indexOf(d.id) >= 0);
+                f.forEach(d => {
+                    colors.push(colorRules(d, countryLanguage));
+                })
+            });
+
+            return colors.length === 1 ? colors[0] : patternRules(colors);
+        } else {
+            return 'transparent';
+        }
     }
 
     function pattern(forms) {
@@ -141,6 +247,32 @@
                 .enter()
                 .append('rect')
                 .attr('fill', color)
+                .attr('x', (d, i) => i * s)
+                .attr('y', 0)
+                .attr('width', s)
+                .attr('height', s);
+
+            return 'url(#' + n + ')';
+        }
+    }
+
+    function patternRules(colors) {
+        var n = 'pattern-' + colors.join('-').replace(/, /g, '-').replace(/[()]/g, '-');
+        var s = 3;
+
+        if (defs.selectAll('#' + n).nodes().length) {
+            return 'url(#' + n + ')';
+        } else {
+            var p = defs.append('pattern')
+                .attr('id', n)
+                .attr('width', colors.length * s)
+                .attr('height', s)
+                .attr('patternUnits', 'userSpaceOnUse');
+
+            p.selectAll('rect').data(colors)
+                .enter()
+                .append('rect')
+                .attr('fill', d => d)
                 .attr('x', (d, i) => i * s)
                 .attr('y', 0)
                 .attr('width', s)

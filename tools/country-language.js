@@ -52,4 +52,37 @@ atlas.objects.countries.geometries.forEach(geom => {
     }
 });
 
-console.log(JSON.stringify({country: cs, language: ls}));
+/*
+ console.log(plurals.forms('af') === plurals.forms('asa'));
+ true
+
+ console.log(plurals.forms('af') === plurals.forms('ak'));
+ false
+ */
+
+let rs = {};
+
+Object.keys(cs).forEach(c => {
+    cs[c].languages.forEach(l => {
+        let n = ls[l].plural.length.toString();
+        rs[n] = rs[n] || [];
+        let f = rs[n].filter(f => f.group === ls[l].plural)[0];
+
+        if (!f) {
+            f = {
+                group: ls[l].plural,
+                country: []
+            };
+
+            rs[n].push(f);
+        }
+
+        f.country.push(c);
+    });
+});
+
+Object.keys(rs).forEach(r => {
+    rs[r].sort((a, b) => b.country.length - a.country.length);
+});
+
+console.log(JSON.stringify({country: cs, language: ls, rules: rs}));
