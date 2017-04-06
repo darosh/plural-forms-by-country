@@ -72,9 +72,9 @@
             .attr('y', (d, i) => i * ls + lp[1])
             .attr('width', ls)
             .attr('height', ls)
-            .attr('fill', color)
+            .attr('fill', color);
 
-        svg.selectAll('.text')
+        svg.selectAll('.legend-label')
             .data(d3.range(1, 7))
             .enter()
             .append('text')
@@ -86,6 +86,18 @@
             .attr('font-size', 14)
             .attr('font-weight', 'bold')
             .text(d => d);
+
+        svg.selectAll('.legend-stat')
+            .data(d3.range(1, 7))
+            .enter()
+            .append('text')
+            .attr('x', lp[0] + +ls + ls + ls / 2)
+            .attr('y', (d, i) => i * ls + lp[1] + ls / 2)
+            .attr('text-anchor', 'end')
+            .attr('dominant-baseline', 'central')
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 14)
+            .text(d => Object.keys(countryLanguage.country).filter(f => countryLanguage.country[f].forms.indexOf(d) >= 0).length);
     }
 
     var color = d3.scaleLinear()
