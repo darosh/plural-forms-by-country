@@ -83,7 +83,7 @@
             <td class="mono text-right">{{index + 1}}</td>
             <th>{{country.name}}</th>
             <td class="mono">{{country.languages.length}}</td>
-            <td class="mono">{{country.forms.join(', ')}}</td>
+            <td class="mono">[{{country.forms.join(', ')}}]</td>
             <td>
                 <div v-for="language in country.languages">
                     {{data.language[language].name}} <span
@@ -100,6 +100,7 @@
         <tr>
             <th>#</th>
             <th>Languages</th>
+            <th>Keywords</th>
             <th>Forms</th>
             <th>Rule</th>
         </tr>
@@ -109,7 +110,8 @@
             <td class="mono text-right">{{index + 1}}</td>
             <th>{{language.name}}</th>
             <td class="mono">{{language.plural.join(', ')}}</td>
-            <td class="mono">{{language.plural.length}}-{{language.rule}}</td>
+            <td class="mono">({{language.plural.length}})</td>
+            <td class="mono">r{{language.rule + 1}}</td>
         </tr>
         </tbody>
     </table>
